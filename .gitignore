@@ -33,6 +33,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Finder (MacOS) folder config
 .DS_Store
 
+# Claude Code project config
+.claude/
+
 # Plans & internal docs
 PLAN.md
 TECH.md
