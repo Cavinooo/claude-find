@@ -1,0 +1,31 @@
+{
+  "name": "claude-find",
+  "version": "0.0.1",
+  "description": "Semantic search for Claude Code sessions. Find any past conversation by describing what you were working on.",
+  "module": "src/index.ts",
+  "type": "module",
+  "bin": {
+    "claude-find": "dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "dev": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "session",
+    "search",
+    "semantic-search",
+    "embeddings",
+    "cli"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
