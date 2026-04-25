@@ -27,5 +27,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "sqlite-vec": "^0.1.9"
   }
 }
