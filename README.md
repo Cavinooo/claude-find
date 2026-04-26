@@ -32,7 +32,7 @@ The embedding model (`nomic-embed-text`) is downloaded automatically on first us
 ### 2. Add MCP server to Claude Code
 
 ```bash
-claude mcp add --transport stdio claude-find -- bunx --bun claude-find serve
+claude mcp add claude-find -- bunx --bun claude-find serve
 ```
 
 Sessions are indexed automatically on first search. To index manually: `bunx --bun claude-find index`
