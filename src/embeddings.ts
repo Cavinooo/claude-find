@@ -10,6 +10,37 @@ export function isModelLoaded(): boolean {
 /**
  * Check if Ollama is running and has the embedding model.
  */
+async function pullModel(): Promise<void> {
+  console.error(`[claude-find] Model '${OLLAMA_MODEL}' not found — pulling automatically...`);
+  const resp = await fetch(`${OLLAMA_URL}/api/pull`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: OLLAMA_MODEL }),
+  });
+  if (!resp.ok || !resp.body) {
+    throw new Error(`Failed to pull model: ${resp.status} ${resp.statusText}`);
+  }
+  // Consume the streaming response until complete
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let lastStatus = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value, { stream: true });
+    for (const line of text.split("\n").filter(Boolean)) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj.status && obj.status !== lastStatus) {
+          console.error(`[claude-find] Pull: ${obj.status}`);
+          lastStatus = obj.status;
+        }
+      } catch {}
+    }
+  }
+  console.error(`[claude-find] Model '${OLLAMA_MODEL}' pulled successfully.`);
+}
+
 async function checkOllama(): Promise<void> {
   if (ollamaChecked) return;
 
@@ -20,13 +51,13 @@ async function checkOllama(): Promise<void> {
     const models = data.models || [];
     const hasModel = models.some((m: any) => m.name?.startsWith(OLLAMA_MODEL));
     if (!hasModel) {
-      throw new Error(`Model '${OLLAMA_MODEL}' not found in Ollama`);
+      await pullModel();
     }
     ollamaChecked = true;
     console.error("[claude-find] Using Ollama (Metal GPU accelerated)");
   } catch (err) {
     console.error("[claude-find] Error: Ollama is required but not available.");
-    console.error("[claude-find] Install: brew install ollama && brew services start ollama && ollama pull nomic-embed-text");
+    console.error("[claude-find] Install: brew install ollama && brew services start ollama");
     throw new Error(`Ollama required: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
