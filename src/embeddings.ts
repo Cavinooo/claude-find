@@ -129,16 +129,22 @@ export async function getEmbeddings(
       try {
         const batchResults = await embedViaOllama(batch, prefix);
         results.push(...batchResults);
-      } catch {
-        // Batch failed (e.g., text too long) — try one at a time
-        for (const text of batch) {
-          try {
-            const [single] = await embedViaOllama([text], prefix);
-            results.push(single);
-          } catch {
-            // Skip this chunk — too large or malformed
-            results.push(new Float32Array(768));
+      } catch (err: any) {
+        // Only retry individually for content errors (4xx).
+        // Network/server errors (connection refused, 5xx) should propagate.
+        const status = err?.message?.match(/(\d{3})/)?.[1];
+        if (status && parseInt(status) >= 400 && parseInt(status) < 500) {
+          for (const text of batch) {
+            try {
+              const [single] = await embedViaOllama([text], prefix);
+              results.push(single);
+            } catch {
+              console.error(`[claude-find] Warning: failed to embed chunk (${text.length} chars), skipping`);
+              results.push(new Float32Array(768));
+            }
           }
+        } else {
+          throw err; // Network/server error — don't retry, propagate
         }
       }
     }

@@ -35,6 +35,10 @@ async function main() {
         else if (p.status === "skipped") skipped++;
         else if (p.status === "error") errors++;
 
+        if (p.total === 0) {
+          if (p.status === "done") console.log("\nNo sessions found.");
+          return;
+        }
         const pct = Math.round((p.current / p.total) * 100);
         const filled = Math.round(pct / 4);
         const bar = "\u2588".repeat(filled) + "\u2591".repeat(25 - filled);
