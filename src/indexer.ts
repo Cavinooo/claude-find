@@ -1,6 +1,6 @@
 import { parseSession } from "./parser";
 import { chunkSession } from "./chunker";
-import { getEmbeddings } from "./embeddings";
+import { getEmbedding } from "./embeddings";
 import type { ClaudeFindDB } from "./db";
 import { existsSync, statSync, readdirSync } from "fs";
 import { join, basename } from "path";
@@ -37,19 +37,18 @@ export async function indexSession(
   // Parse the session
   const parsed = await parseSession(filePath);
 
-  // Chunk the messages
+  // Chunk the messages — embed everything for full coverage
   const chunks = chunkSession(parsed.messages, parsed.compactSummaries);
 
   if (chunks.length === 0) return false;
 
-  // Generate embeddings in small batches to avoid OOM on large sessions
-  const BATCH_SIZE = 8;
-  const chunkTexts = chunks.map((c) => c.text);
+  // Embed one at a time to keep memory constant on large sessions
   const embeddings: Float32Array[] = [];
-  for (let i = 0; i < chunkTexts.length; i += BATCH_SIZE) {
-    const batch = chunkTexts.slice(i, i + BATCH_SIZE);
-    const batchEmbeddings = await getEmbeddings(batch, "search_document");
-    embeddings.push(...batchEmbeddings);
+  for (let i = 0; i < chunks.length; i++) {
+    const emb = await getEmbedding(chunks[i].text, "search_document");
+    embeddings.push(emb);
+    // Reclaim ONNX buffers between embeddings
+    if (i % 10 === 9) Bun.gc(true);
   }
 
   // Write all data in a single transaction — if anything fails,

@@ -24,15 +24,23 @@ async function main() {
       break;
 
     case "index": {
-      console.log("Indexing Claude Code sessions...");
+      console.log("Indexing Claude Code sessions...\n");
       const db = createDatabase(DB_PATH);
+      let indexed = 0;
+      let skipped = 0;
+      let errors = 0;
       await indexSessions(db, CLAUDE_PROJECTS_DIR, (p) => {
-        if (p.status === "indexing") {
-          process.stdout.write(`\rIndexing ${p.current}/${p.total}: ${p.sessionId}`);
-        } else if (p.status === "skipped") {
-          process.stdout.write(`\rSkipped ${p.current}/${p.total}: ${p.sessionId}`);
-        } else if (p.status === "done") {
-          console.log(`\nDone. ${p.total} sessions processed.`);
+        if (p.status === "indexing") indexed++;
+        else if (p.status === "skipped") skipped++;
+        else if (p.status === "error") errors++;
+
+        const pct = Math.round((p.current / p.total) * 100);
+        const filled = Math.round(pct / 4);
+        const bar = "\u2588".repeat(filled) + "\u2591".repeat(25 - filled);
+        process.stdout.write(`\r  [${bar}] ${p.current}/${p.total} (${pct}%)`);
+
+        if (p.status === "done") {
+          console.log(`\n\nDone. ${indexed} indexed, ${skipped} skipped, ${errors} errors.`);
         }
       });
       db.close();
