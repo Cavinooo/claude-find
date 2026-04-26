@@ -1,6 +1,6 @@
 import { parseSession } from "./parser";
 import { chunkSession } from "./chunker";
-import { getEmbedding } from "./embeddings";
+import { getEmbeddings } from "./embeddings";
 import type { ClaudeFindDB } from "./db";
 import { existsSync, statSync, readdirSync } from "fs";
 import { join, basename } from "path";
@@ -42,13 +42,13 @@ export async function indexSession(
 
   if (chunks.length === 0) return false;
 
-  // Embed one at a time to keep memory constant on large sessions
+  // Embed in small batches — tensor dispose prevents memory leaks
+  const BATCH_SIZE = 4;
   const embeddings: Float32Array[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    const emb = await getEmbedding(chunks[i].text, "search_document");
-    embeddings.push(emb);
-    // Reclaim ONNX buffers between embeddings
-    if (i % 10 === 9) Bun.gc(true);
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    const batch = chunks.slice(i, i + BATCH_SIZE);
+    const batchEmbeddings = await getEmbeddings(batch.map((c) => c.text), "search_document");
+    embeddings.push(...batchEmbeddings);
   }
 
   // Write all data in a single transaction — if anything fails,
