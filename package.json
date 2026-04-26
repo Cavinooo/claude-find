@@ -30,8 +30,10 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "onnxruntime-node": "^1.24.3",
-    "sqlite-vec": "^0.1.9"
+    "sqlite-vec": "^0.1.9",
+    "zod": "^4.3.6"
   },
   "trustedDependencies": [
     "onnxruntime-node",

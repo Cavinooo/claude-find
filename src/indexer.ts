@@ -42,9 +42,15 @@ export async function indexSession(
 
   if (chunks.length === 0) return false;
 
-  // Generate embeddings for all chunks in a batch
+  // Generate embeddings in small batches to avoid OOM on large sessions
+  const BATCH_SIZE = 8;
   const chunkTexts = chunks.map((c) => c.text);
-  const embeddings = await getEmbeddings(chunkTexts, "search_document");
+  const embeddings: Float32Array[] = [];
+  for (let i = 0; i < chunkTexts.length; i += BATCH_SIZE) {
+    const batch = chunkTexts.slice(i, i + BATCH_SIZE);
+    const batchEmbeddings = await getEmbeddings(batch, "search_document");
+    embeddings.push(...batchEmbeddings);
+  }
 
   // Write all data in a single transaction — if anything fails,
   // everything rolls back so the next run retries cleanly
