@@ -87,8 +87,10 @@ export async function startServer(): Promise<void> {
       query: z.string().describe("What to search for — natural language description of the past session or topic"),
       max_sessions: z.number().optional().default(3).describe("Max sessions to return (default 3)"),
       max_chunks: z.number().optional().default(2).describe("Max conversation chunks per session (default 2)"),
+      scope: z.enum(["current", "all"]).optional().default("current").describe("'current' searches only the current project (default), 'all' searches across all projects. Use 'all' when user says 'across all projects' or doesn't specify a project."),
+      project_filter: z.string().optional().describe("Filter to a specific project by name (e.g. 'visk', 'myapp'). Use when user says 'in visk' or 'in the payments project'."),
     },
-    async ({ query, max_sessions, max_chunks }) => {
+    async ({ query, max_sessions, max_chunks, scope, project_filter }) => {
       try {
         const database = getDb();
 
@@ -104,10 +106,19 @@ export async function startServer(): Promise<void> {
           console.error("[claude-find] Indexing complete.");
         }
 
+        // Determine project scope
+        let currentProject: string | undefined;
+        if (project_filter) {
+          currentProject = project_filter;
+        } else if (scope === "current") {
+          currentProject = process.cwd();
+        }
+
         const results = await search(database, {
           query,
           maxSessions: max_sessions,
           maxChunks: max_chunks,
+          currentProject,
         });
 
         const formatted = formatSearchResults(results);

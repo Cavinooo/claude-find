@@ -121,17 +121,19 @@ export async function search(
       score *= COMPACT_SUMMARY_BOOST;
     }
 
-    // Context-aware boosts
-    if (currentProject || currentBranch) {
-      const session = getSessionCached(chunk.session_id);
-      if (session) {
-        if (currentProject && session.project_path === currentProject) {
-          score *= CURRENT_PROJECT_BOOST;
-        }
-        if (currentBranch && session.branch === currentBranch) {
-          score *= CURRENT_BRANCH_BOOST;
-        }
+    // Context-aware filtering and boosts
+    const session = getSessionCached(chunk.session_id);
+    if (session && currentProject) {
+      const projectPath = session.project_path || "";
+      const isMatch = projectPath === currentProject || projectPath.includes(currentProject);
+      if (!isMatch) {
+        // Filter out non-matching projects (not just boost)
+        continue;
       }
+      score *= CURRENT_PROJECT_BOOST;
+    }
+    if (session && currentBranch && session.branch === currentBranch) {
+      score *= CURRENT_BRANCH_BOOST;
     }
 
     scoredChunks.push({
