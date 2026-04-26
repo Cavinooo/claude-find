@@ -154,13 +154,18 @@ export function createDatabase(dbPath: string): ClaudeFindDB {
   const lastInsertRowIdStmt = db.prepare("SELECT last_insert_rowid() as id");
   const getChunksStmt = db.prepare("SELECT * FROM chunks WHERE session_id = ?");
 
-  // FTS5 triggers to keep in sync with chunks table
+  // Triggers to keep FTS5 and vector tables in sync with chunks
+  // DROP + CREATE to ensure trigger body is always up to date
   db.exec(`
-    CREATE TRIGGER IF NOT EXISTS chunks_ai AFTER INSERT ON chunks BEGIN
+    DROP TRIGGER IF EXISTS chunks_ai;
+    CREATE TRIGGER chunks_ai AFTER INSERT ON chunks BEGIN
       INSERT INTO chunks_fts(rowid, text) VALUES (new.id, new.text);
     END;
-    CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
+
+    DROP TRIGGER IF EXISTS chunks_ad;
+    CREATE TRIGGER chunks_ad AFTER DELETE ON chunks BEGIN
       INSERT INTO chunks_fts(chunks_fts, rowid, text) VALUES ('delete', old.id, old.text);
+      DELETE FROM chunks_vec WHERE chunk_id = old.id;
     END;
   `);
 
