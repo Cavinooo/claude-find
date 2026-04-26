@@ -1,14 +1,17 @@
 {
   "name": "claude-find",
-  "version": "0.0.1",
-  "description": "Semantic search for Claude Code sessions. Find any past conversation by describing what you were working on.",
-  "module": "src/index.ts",
+  "version": "0.1.2",
+  "description": "Pull deep memory from across your Claude Code sessions — when you need it.",
   "type": "module",
   "bin": {
-    "claude-find": "dist/index.js"
+    "claude-find": "bin/claude-find.js"
   },
+  "files": [
+    "bin",
+    "src",
+    ".claude/skills"
+  ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
     "dev": "bun run src/index.ts",
     "test": "bun test"
   },
@@ -29,14 +32,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "onnxruntime-node": "^1.24.3",
     "sqlite-vec": "^0.1.9",
     "zod": "^4.3.6"
-  },
-  "trustedDependencies": [
-    "onnxruntime-node",
-    "protobufjs"
-  ]
+  }
 }
