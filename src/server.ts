@@ -7,6 +7,14 @@ import { search, type SearchResult } from "./searcher";
 import { join } from "path";
 import { existsSync } from "fs";
 
+// Prevent background indexing errors from crashing the MCP server
+process.on("uncaughtException", (err) => {
+  console.error("[claude-find] Uncaught exception:", err);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("[claude-find] Unhandled rejection:", err);
+});
+
 const CLAUDE_PROJECTS_DIR = join(
   process.env.HOME || "~",
   ".claude",
@@ -71,13 +79,35 @@ export async function startServer(): Promise<void> {
   });
 
   let db: ReturnType<typeof createDatabase> | null = null;
-  let indexed = false;
+  let indexProgress = { current: 0, total: 0, done: false };
 
   function getDb() {
     if (!db) {
       db = createDatabase(DB_PATH);
     }
     return db;
+  }
+
+  // Start indexing in the background immediately — searches can run against partial results
+  if (existsSync(CLAUDE_PROJECTS_DIR)) {
+    const database = getDb();
+    console.error("[claude-find] Starting background indexing...");
+    indexSessions(database, CLAUDE_PROJECTS_DIR, (p) => {
+      indexProgress.current = p.current;
+      indexProgress.total = p.total;
+      if (p.status === "indexing") {
+        console.error(`[claude-find] Indexing ${p.current}/${p.total}: ${p.sessionId}`);
+      }
+      if (p.status === "done") {
+        indexProgress.done = true;
+        console.error("[claude-find] Indexing complete.");
+      }
+    }).catch((err) => {
+      console.error("[claude-find] Indexing error:", err);
+      indexProgress.done = true;
+    });
+  } else {
+    indexProgress.done = true;
   }
 
   server.tool(
@@ -94,18 +124,6 @@ export async function startServer(): Promise<void> {
       try {
         const database = getDb();
 
-        // Lazy indexing on first search
-        if (!indexed && existsSync(CLAUDE_PROJECTS_DIR)) {
-          console.error("[claude-find] First search — indexing sessions...");
-          await indexSessions(database, CLAUDE_PROJECTS_DIR, (p) => {
-            if (p.status === "indexing") {
-              console.error(`[claude-find] Indexing ${p.current}/${p.total}: ${p.sessionId}`);
-            }
-          });
-          indexed = true;
-          console.error("[claude-find] Indexing complete.");
-        }
-
         // Determine project scope
         let currentProject: string | undefined;
         if (project_filter) {
@@ -121,7 +139,11 @@ export async function startServer(): Promise<void> {
           currentProject,
         });
 
-        const formatted = formatSearchResults(results);
+        let formatted = formatSearchResults(results);
+
+        if (!indexProgress.done) {
+          formatted += `\n\n---\n_Indexing in progress (${indexProgress.current}/${indexProgress.total} sessions) — results may be incomplete._`;
+        }
 
         return {
           content: [{ type: "text" as const, text: formatted }],

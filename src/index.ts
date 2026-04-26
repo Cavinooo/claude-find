@@ -56,7 +56,7 @@ async function main() {
 
     case "status": {
       if (!existsSync(DB_PATH)) {
-        console.log("No index found. Run 'claude-find index' or use the MCP server (indexes on first search).");
+        console.log("No index found. Run 'claude-find index' or start the MCP server (indexes automatically on startup).");
         break;
       }
       const db = createDatabase(DB_PATH);
@@ -191,11 +191,11 @@ async function main() {
     }
 
     default:
-      console.log(`claude-find — On-demand deep context from past Claude Code sessions
+      console.log(`claude-find — Pull deep memory from across your Claude Code sessions
 
 Usage:
   claude-find setup     Install everything and register with Claude Code
-  claude-find index     Manually re-index all sessions
+  claude-find index     Force re-index all sessions
   claude-find status    Show index statistics
 `);
   }

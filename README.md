@@ -11,7 +11,7 @@ brew install bun ollama
 bunx claude-find setup
 ```
 
-`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed automatically on first search.
+`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed in the background when the server starts — searches work immediately and return progressively more complete results as indexing continues.
 
 <details>
 <summary>Linux / Windows</summary>
@@ -44,7 +44,7 @@ Claude searches your past sessions semantically, finds the relevant conversation
 
 - **Searches raw transcripts** — not summaries or observations. Nothing lost through compression.
 - **Retroactive** — works on all existing sessions immediately. No hooks needed.
-- **On-demand** — zero token overhead until you ask. No background processes.
+- **Non-blocking** — indexes in the background at startup. Searches work instantly, even mid-indexing.
 - **Uses compact summaries** — Claude's own session understanding, boosted in ranking.
 - **Indexes tool call metadata** — search by files touched, errors encountered.
 - **Fast** — Ollama + GPU keeps indexing fast and memory bounded.
