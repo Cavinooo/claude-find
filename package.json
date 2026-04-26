@@ -29,6 +29,12 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "onnxruntime-node": "^1.24.3",
     "sqlite-vec": "^0.1.9"
-  }
+  },
+  "trustedDependencies": [
+    "onnxruntime-node",
+    "protobufjs"
+  ]
 }
