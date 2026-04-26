@@ -29,6 +29,7 @@ async function main() {
       let indexed = 0;
       let skipped = 0;
       let errors = 0;
+      const startTime = Date.now();
       await indexSessions(db, CLAUDE_PROJECTS_DIR, (p) => {
         if (p.status === "indexing") indexed++;
         else if (p.status === "skipped") skipped++;
@@ -37,10 +38,12 @@ async function main() {
         const pct = Math.round((p.current / p.total) * 100);
         const filled = Math.round(pct / 4);
         const bar = "\u2588".repeat(filled) + "\u2591".repeat(25 - filled);
-        process.stdout.write(`\r  [${bar}] ${p.current}/${p.total} (${pct}%)`);
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        process.stdout.write(`\r  [${bar}] ${p.current}/${p.total} (${pct}%) ${elapsed}s     `);
 
         if (p.status === "done") {
-          console.log(`\n\nDone. ${indexed} indexed, ${skipped} skipped, ${errors} errors.`);
+          const totalTime = Math.round((Date.now() - startTime) / 1000);
+          console.log(`\n\nDone in ${totalTime}s. ${indexed} indexed, ${skipped} unchanged, ${errors} errors.`);
         }
       });
       db.close();

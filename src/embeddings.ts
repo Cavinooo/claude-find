@@ -35,7 +35,10 @@ export async function getEmbedding(
   const prefixed = `${prefix}: ${text}`;
   const output = await model(prefixed, { pooling: "mean", normalize: true });
 
-  return new Float32Array(output.data);
+  // Copy data out and dispose the tensor to free ONNX buffers
+  const result = new Float32Array(output.data);
+  output.dispose?.();
+  return result;
 }
 
 /**
@@ -49,11 +52,12 @@ export async function getEmbeddings(
   const prefixed = texts.map((t) => `${prefix}: ${t}`);
   const output = await model(prefixed, { pooling: "mean", normalize: true });
 
-  // Derive dimension from output rather than hardcoding
+  // Derive dimension from output, copy data, dispose tensor
   const dim = output.data.length / texts.length;
   const results: Float32Array[] = [];
   for (let i = 0; i < texts.length; i++) {
     results.push(new Float32Array(output.data.slice(i * dim, (i + 1) * dim)));
   }
+  output.dispose?.();
   return results;
 }
