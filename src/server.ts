@@ -82,7 +82,7 @@ export async function startServer(): Promise<void> {
 
   server.tool(
     "search_sessions",
-    "Search past Claude Code sessions by meaning. Returns raw conversation chunks from relevant sessions including reasoning, constraints, and failed approaches. Use this when the user references past work, asks about previous sessions, or wants context from earlier conversations.",
+    "Search the full conversation history from past Claude Code sessions stored in ~/.claude/projects/. This tool has access to the complete raw transcripts of all previous sessions — including the actual back-and-forth discussion, reasoning, failed approaches, user constraints, and code decisions. Use this tool FIRST whenever the user mentions anything from a past session, asks 'what did we discuss', 'pull in context from', 'remember when we', 'how did we handle', or references any prior work. This tool searches semantically — the user doesn't need to remember exact words. Much more detailed than built-in memory.",
     {
       query: z.string().describe("What to search for — natural language description of the past session or topic"),
       max_sessions: z.number().optional().default(3).describe("Max sessions to return (default 3)"),
