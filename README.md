@@ -6,38 +6,20 @@ Semantic search across all your past Claude Code sessions. Find relevant context
 
 ## Setup
 
-### 1. Install prerequisites
-
-**macOS:**
 ```bash
 brew install bun ollama
-brew services start ollama
+bunx claude-find setup
 ```
 
-**Linux:**
-```bash
-curl -fsSL https://bun.sh/install | bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve &
-```
+`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed automatically on first search.
 
-**Windows:**
-```powershell
-powershell -c "irm bun.sh/install.ps1 | iex"
-```
-Download and install [Ollama for Windows](https://ollama.com/download/windows), then start it from the Start menu.
+<details>
+<summary>Linux / Windows</summary>
 
-The embedding model (`nomic-embed-text`) is downloaded automatically on first use.
+Install [Bun](https://bun.sh) and [Ollama](https://ollama.com), then run `bunx claude-find setup`. It detects your platform and guides you through anything missing.
+</details>
 
-### 2. Add MCP server to Claude Code
-
-```bash
-claude mcp add claude-find -- bunx --bun claude-find serve
-```
-
-Sessions are indexed automatically on first search. To index manually: `bunx --bun claude-find index`
-
-### 3. Use it
+## Use it
 
 In any Claude Code session:
 
