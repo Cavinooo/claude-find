@@ -52,6 +52,7 @@ export interface ClaudeFindDB {
   findSessionsByFile(filePath: string): any[];
   insertChunk(sessionId: string, msgStart: number, msgEnd: number, text: string, isCompactSummary: boolean): number;
   getChunksForSession(sessionId: string): any[];
+  getChunkById(id: number): any;
   insertVector(chunkId: number, embedding: Float32Array): void;
   searchVectors(query: Float32Array, limit: number): any[];
   searchFTS(query: string, limit?: number): any[];
@@ -152,6 +153,7 @@ export function createDatabase(dbPath: string): ClaudeFindDB {
     "INSERT INTO chunks (session_id, msg_start, msg_end, text, is_compact_summary) VALUES (?, ?, ?, ?, ?)"
   );
   const lastInsertRowIdStmt = db.prepare("SELECT last_insert_rowid() as id");
+  const getChunkByIdStmt = db.prepare("SELECT * FROM chunks WHERE id = ?");
   const getChunksStmt = db.prepare("SELECT * FROM chunks WHERE session_id = ?");
 
   // Triggers to keep FTS5 and vector tables in sync with chunks
@@ -224,6 +226,10 @@ export function createDatabase(dbPath: string): ClaudeFindDB {
 
     findSessionsByFile(filePath: string) {
       return findByFileStmt.all(filePath) as any[];
+    },
+
+    getChunkById(id: number) {
+      return getChunkByIdStmt.get(id);
     },
 
     insertChunk(sessionId: string, msgStart: number, msgEnd: number, text: string, isCompactSummary: boolean): number {
