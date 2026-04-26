@@ -23,10 +23,8 @@ bun run src/index.ts index
 ### 3. Add MCP server to Claude Code
 
 ```bash
-claude mcp add --transport stdio claude-find -- bun /path/to/claude-find/src/index.ts serve
+claude mcp add --transport stdio claude-find -- bunx --bun claude-find serve
 ```
-
-Replace `/path/to/claude-find` with the actual path where you cloned this repo.
 
 ### 4. Use it
 
