@@ -27,6 +27,40 @@ export interface ParsedSession {
   metadata: SessionMetadata;
 }
 
+const CODE_BLOCK_THRESHOLD = 200;
+
+/**
+ * Strip XML framework tags that are noise for search.
+ * These are Claude Code infrastructure artifacts, not meaningful conversation.
+ */
+function stripFrameworkTags(text: string): string {
+  return text.replace(/<(system-reminder|local-command-caveat|available-deferred-tools|command-name|command-message|command-args|env)>[\s\S]*?<\/\1>/g, "");
+}
+
+/**
+ * Replace large fenced code blocks with a short marker.
+ * Keeps short snippets (signatures, one-liners) that are useful search context.
+ */
+export function stripCodeBlocks(text: string): string {
+  return text.replace(/```[\w]*\n[\s\S]*?```/g, (match) => {
+    if (match.length <= CODE_BLOCK_THRESHOLD) return match;
+    const lines = match.split("\n").length - 2;
+    const lang = match.match(/```(\w+)/)?.[1] || "";
+    return `[code${lang ? ": " + lang : ""}, ${lines} lines]`;
+  });
+}
+
+/**
+ * Clean message text for indexing: strip framework tags, large code blocks,
+ * and collapse excessive whitespace.
+ */
+export function cleanMessageText(text: string): string {
+  let cleaned = stripFrameworkTags(text);
+  cleaned = stripCodeBlocks(cleaned);
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n").trim();
+  return cleaned;
+}
+
 export async function parseSession(filePath: string): Promise<ParsedSession> {
   const messages: ParsedMessage[] = [];
   const compactSummaries: string[] = [];
@@ -79,7 +113,7 @@ export async function parseSession(filePath: string): Promise<ParsedSession> {
       if (typeof content === "string" && content.length > 0) {
         messages.push({
           role: "user",
-          text: content,
+          text: cleanMessageText(content),
           timestamp: record.timestamp || "",
           index: messageIndex++,
         });
@@ -97,7 +131,7 @@ export async function parseSession(filePath: string): Promise<ParsedSession> {
         if (block.type === "text" && typeof block.text === "string" && block.text.length > 0) {
           messages.push({
             role: "assistant",
-            text: block.text,
+            text: cleanMessageText(block.text),
             timestamp: record.timestamp || "",
             index: messageIndex++,
           });

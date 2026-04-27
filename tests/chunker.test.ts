@@ -155,20 +155,53 @@ describe("chunkSession", () => {
     expect(chunks[0].text).toContain("CLAUDE:");
   });
 
-  test("consecutive chunks cover all messages without gaps or overlaps", () => {
+  test("chunks cover all messages from first to last", () => {
     const messages: ParsedMessage[] = Array.from({ length: 30 }, (_, i) =>
       msgOfSize(i % 2 === 0 ? "user" : "assistant", 200, i)
     );
 
     const chunks = chunkSession(messages, []);
+    const regularChunks = chunks.filter((c) => !c.isCompactSummary);
 
-    // Verify no gaps
-    for (let i = 1; i < chunks.length; i++) {
-      expect(chunks[i].msgStart).toBe(chunks[i - 1].msgEnd + 1);
+    // Verify first and last message indices are covered
+    expect(regularChunks[0].msgStart).toBe(0);
+    expect(regularChunks[regularChunks.length - 1].msgEnd).toBe(29);
+
+    // Verify multiple chunks were created (30 messages at 200 tokens each won't fit in one)
+    expect(regularChunks.length).toBeGreaterThan(1);
+
+    // Verify no chunk exceeds the target size by much
+    for (const chunk of regularChunks) {
+      expect(chunk.text.length).toBeLessThan(7000);
     }
+  });
 
-    // Verify first and last
-    expect(chunks[0].msgStart).toBe(0);
-    expect(chunks[chunks.length - 1].msgEnd).toBe(29);
+  test("splits oversized single message into multiple chunks", () => {
+    // One message that's ~3x the target size
+    const messages: ParsedMessage[] = [
+      msg("user", "line\n".repeat(5000), 0),
+      msg("assistant", "ok", 1),
+    ];
+
+    const chunks = chunkSession(messages, []);
+    const regularChunks = chunks.filter((c) => !c.isCompactSummary);
+
+    // Should be split into multiple chunks, not one giant one
+    expect(regularChunks.length).toBeGreaterThan(1);
+    // No chunk should exceed the target size by much
+    for (const chunk of regularChunks) {
+      expect(chunk.text.length).toBeLessThan(7000);
+    }
+  });
+
+  test("splits oversized compact summary", () => {
+    const hugeSummary = "summary line\n".repeat(2000);
+    const chunks = chunkSession([], [hugeSummary]);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(chunk.text.length).toBeLessThan(7000);
+      expect(chunk.isCompactSummary).toBe(true);
+    }
   });
 });

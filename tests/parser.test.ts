@@ -1,5 +1,5 @@
 import { test, expect, describe, afterAll } from "bun:test";
-import { parseSession, type ParsedSession } from "../src/parser";
+import { parseSession, stripCodeBlocks, cleanMessageText, type ParsedSession } from "../src/parser";
 import { writeFileSync, mkdirSync, rmSync } from "fs";
 import { join } from "path";
 
@@ -102,6 +102,109 @@ const fileHistorySnapshot = () => ({
 });
 
 // --- Tests ---
+
+describe("stripCodeBlocks", () => {
+  test("keeps short code blocks", () => {
+    const text = "Here's the fix:\n```ts\nconst x = 1;\n```\nDone.";
+    expect(stripCodeBlocks(text)).toBe(text);
+  });
+
+  test("strips large code blocks with language marker", () => {
+    const longCode = "x\n".repeat(200);
+    const text = `Here's the file:\n\`\`\`typescript\n${longCode}\`\`\`\nThat's it.`;
+    const result = stripCodeBlocks(text);
+    expect(result).toContain("[code: typescript,");
+    expect(result).toContain("lines]");
+    expect(result).toContain("Here's the file:");
+    expect(result).toContain("That's it.");
+    expect(result).not.toContain(longCode);
+  });
+
+  test("strips large code blocks without language", () => {
+    const longCode = "line\n".repeat(200);
+    const text = `Before\n\`\`\`\n${longCode}\`\`\`\nAfter`;
+    const result = stripCodeBlocks(text);
+    expect(result).toContain("[code,");
+    expect(result).toContain("Before");
+    expect(result).toContain("After");
+  });
+
+  test("handles multiple code blocks independently", () => {
+    const short = "```ts\nconst x = 1;\n```";
+    const longCode = "line\n".repeat(200);
+    const long = `\`\`\`py\n${longCode}\`\`\``;
+    const text = `${short}\nsome text\n${long}`;
+    const result = stripCodeBlocks(text);
+    expect(result).toContain("const x = 1"); // short kept
+    expect(result).toContain("[code: py,"); // long stripped
+  });
+
+  test("returns text unchanged when no code blocks", () => {
+    const text = "Just regular text with no code.";
+    expect(stripCodeBlocks(text)).toBe(text);
+  });
+
+  test("strips code blocks from parsed messages", async () => {
+    const longCode = "x\n".repeat(200);
+    const path = createTestSession("codestrip.jsonl", [
+      userMessage(`fix this:\n\`\`\`ts\n${longCode}\`\`\``),
+      assistantTextMessage(`Here's the fix:\n\`\`\`ts\n${longCode}\`\`\``),
+    ]);
+    const result = await parseSession(path);
+    expect(result.messages[0].text).toContain("[code: ts,");
+    expect(result.messages[1].text).toContain("[code: ts,");
+    expect(result.messages[0].text).not.toContain(longCode);
+  });
+});
+
+describe("cleanMessageText", () => {
+  test("strips system-reminder tags", () => {
+    const text = "Hello\n<system-reminder>\nSome long system prompt\n</system-reminder>\nWorld";
+    const result = cleanMessageText(text);
+    expect(result).toContain("Hello");
+    expect(result).toContain("World");
+    expect(result).not.toContain("system-reminder");
+    expect(result).not.toContain("Some long system prompt");
+  });
+
+  test("strips local-command-caveat tags", () => {
+    const text = "<local-command-caveat>Caveat: messages below were generated</local-command-caveat>\nActual message";
+    const result = cleanMessageText(text);
+    expect(result).toContain("Actual message");
+    expect(result).not.toContain("Caveat");
+  });
+
+  test("strips available-deferred-tools tags", () => {
+    const text = "Before\n<available-deferred-tools>\nTool1\nTool2\n</available-deferred-tools>\nAfter";
+    const result = cleanMessageText(text);
+    expect(result).toContain("Before");
+    expect(result).toContain("After");
+    expect(result).not.toContain("Tool1");
+  });
+
+  test("strips multiple framework tags in one message", () => {
+    const text = "<command-name>/clear</command-name>\n<command-message>clear</command-message>\n<command-args></command-args>\nReal content here";
+    const result = cleanMessageText(text);
+    expect(result).toContain("Real content here");
+    expect(result).not.toContain("command-name");
+    expect(result).not.toContain("command-message");
+  });
+
+  test("strips both code blocks and XML tags", () => {
+    const longCode = "x\n".repeat(200);
+    const text = `<system-reminder>noise</system-reminder>\nHere's the fix:\n\`\`\`ts\n${longCode}\`\`\`\nDone.`;
+    const result = cleanMessageText(text);
+    expect(result).toContain("Here's the fix:");
+    expect(result).toContain("Done.");
+    expect(result).not.toContain("noise");
+    expect(result).toContain("[code: ts,");
+  });
+
+  test("collapses excessive newlines", () => {
+    const text = "Line 1\n\n\n\n\nLine 2";
+    expect(cleanMessageText(text)).toBe("Line 1\n\nLine 2");
+  });
+});
 
 describe("parseSession", () => {
   test("extracts user messages (string content only, skips tool results)", async () => {

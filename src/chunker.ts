@@ -1,4 +1,5 @@
 import type { ParsedMessage } from "./parser";
+import { cleanMessageText } from "./parser";
 
 export interface Chunk {
   msgStart: number;
@@ -7,13 +8,36 @@ export interface Chunk {
   isCompactSummary: boolean;
 }
 
-const TARGET_TOKENS = 1500;
-const CHARS_PER_TOKEN = 4; // rough estimate
-const TARGET_CHARS = TARGET_TOKENS * CHARS_PER_TOKEN;
+// nomic-embed-text has 2048 token context via Ollama. Worst-case tokenization
+// (code, URLs, special chars) is ~2 chars/token. 3800 chars / 2 = 1900 tokens,
+// plus ~200 char enrichment prefix = safely under 2048.
+const TARGET_CHARS = 3800;
 
 function formatMessage(msg: ParsedMessage): string {
   const label = msg.role === "user" ? "USER" : "CLAUDE";
   return `${label}: ${msg.text}`;
+}
+
+/**
+ * Split text that exceeds TARGET_CHARS at newline boundaries.
+ */
+function splitOversized(text: string): string[] {
+  if (text.length <= TARGET_CHARS) return [text];
+
+  const parts: string[] = [];
+  let remaining = text;
+  while (remaining.length > TARGET_CHARS) {
+    let splitAt = remaining.lastIndexOf("\n", TARGET_CHARS);
+    if (splitAt <= 0) {
+      parts.push(remaining.substring(0, TARGET_CHARS));
+      remaining = remaining.substring(TARGET_CHARS);
+    } else {
+      parts.push(remaining.substring(0, splitAt));
+      remaining = remaining.substring(splitAt + 1); // skip newline
+    }
+  }
+  if (remaining) parts.push(remaining);
+  return parts;
 }
 
 /**
@@ -30,15 +54,26 @@ export function chunkSession(
 
   // Compact summaries each get their own prioritized chunk
   for (const summary of compactSummaries) {
-    chunks.push({
-      msgStart: -1,
-      msgEnd: -1,
-      text: summary,
-      isCompactSummary: true,
-    });
+    const stripped = cleanMessageText(summary);
+    for (const part of splitOversized(stripped)) {
+      chunks.push({
+        msgStart: -1,
+        msgEnd: -1,
+        text: part,
+        isCompactSummary: true,
+      });
+    }
   }
 
   if (messages.length === 0) return chunks;
+
+  // Helper: flush accumulated text as one or more chunks, splitting if oversized
+  function flushChunks(texts: string[], start: number, end: number) {
+    const joined = texts.join("\n");
+    for (const part of splitOversized(joined)) {
+      chunks.push({ msgStart: start, msgEnd: end, text: part, isCompactSummary: false });
+    }
+  }
 
   // Split messages into chunks, respecting user+assistant pairs
   let currentTexts: string[] = [];
@@ -58,13 +93,7 @@ export function chunkSession(
       const isResponseToPrev = msg.role === "assistant" && prevMsg?.role === "user";
 
       if (!isResponseToPrev) {
-        // Safe to split here — flush the current chunk
-        chunks.push({
-          msgStart: chunkStart,
-          msgEnd: messages[i - 1].index,
-          text: currentTexts.join("\n"),
-          isCompactSummary: false,
-        });
+        flushChunks(currentTexts, chunkStart, messages[i - 1].index);
         currentTexts = [];
         currentChars = 0;
         chunkStart = msg.index;
@@ -77,12 +106,7 @@ export function chunkSession(
 
   // Flush remaining messages
   if (currentTexts.length > 0) {
-    chunks.push({
-      msgStart: chunkStart,
-      msgEnd: messages[messages.length - 1].index,
-      text: currentTexts.join("\n"),
-      isCompactSummary: false,
-    });
+    flushChunks(currentTexts, chunkStart, messages[messages.length - 1].index);
   }
 
   return chunks;
