@@ -2,7 +2,7 @@
 
 Pull deep memory from across your Claude Code sessions — when you need it.
 
-Semantic search across all your past Claude Code sessions. Find relevant context by meaning — not just keywords — and inject it into your current session. Searches raw conversation transcripts, not compressed summaries, so Claude gets the full story: reasoning, constraints, failed approaches, and decisions.
+Semantic search over all your past Claude Code sessions. Finds context by meaning, not just keywords. Searches the raw conversation transcripts, not compressed summaries, so Claude gets the full picture: reasoning, constraints, failed approaches, and decisions.
 
 ## Setup
 
@@ -11,7 +11,7 @@ brew install bun ollama
 bunx claude-find setup
 ```
 
-`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed in the background when the server starts — searches work immediately and return progressively more complete results as indexing continues.
+`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed in the background on startup. Searches work immediately and return progressively more complete results as indexing continues.
 
 <details>
 <summary>Linux / Windows</summary>
@@ -30,7 +30,7 @@ In any Claude Code session:
 /find refactoring the payment module across all projects
 ```
 
-Claude searches your past sessions semantically, finds the relevant conversations, and synthesizes the context — including what was tried, what failed, what constraints you stated, and what decisions were made.
+Claude searches your past sessions semantically, finds the relevant conversations, and synthesizes the context: what was tried, what failed, what constraints you set, and what decisions were made.
 
 ## How it works
 
@@ -38,16 +38,16 @@ Claude searches your past sessions semantically, finds the relevant conversation
 2. **Extracts** user + assistant messages, compact summaries, file paths from tool calls
 3. **Embeds** conversation chunks using nomic-embed-text via Ollama (GPU accelerated)
 4. **Searches** with hybrid semantic + keyword (FTS5) merged via Reciprocal Rank Fusion
-5. **Returns** raw conversation chunks — Claude does the synthesis with full context
+5. **Returns** raw conversation chunks so Claude can synthesize with full context
 
 ## What makes this different
 
-- **Searches raw transcripts** — not summaries or observations. Nothing lost through compression.
-- **Retroactive** — works on all existing sessions immediately. No hooks needed.
-- **Non-blocking** — indexes in the background at startup. Searches work instantly, even mid-indexing.
-- **Uses compact summaries** — Claude's own session understanding, boosted in ranking.
-- **Indexes tool call metadata** — search by files touched, errors encountered.
-- **Fast** — Ollama + GPU keeps indexing fast and memory bounded.
+- **Searches raw transcripts**, not summaries. Nothing lost through compression.
+- **Retroactive**: works on all existing sessions immediately. No hooks needed.
+- **Non-blocking**: indexes in the background at startup. Searches work instantly, even mid-indexing.
+- **Uses compact summaries**: Claude's own session understanding, boosted in ranking.
+- **Indexes tool call metadata**: search by files touched, errors encountered.
+- **Fast**: Ollama + GPU keeps indexing fast and memory bounded.
 
 ## Requirements
 
