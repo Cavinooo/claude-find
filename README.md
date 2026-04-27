@@ -47,6 +47,7 @@ After upgrading, run `bunx claude-find index` to rebuild the index with the late
 
 - **Searches raw transcripts**. Nothing lost through compression.
 - **Retroactive**: works on all existing sessions immediately. No hooks needed.
+- **Permanent history**: setup disables Claude Code's 30-day session cleanup so your sessions are searchable forever.
 - **Non-blocking**: indexes in the background at startup. Searches work instantly, even mid-indexing.
 - **Uses compact summaries**: Claude's own session understanding, boosted in ranking.
 - **Indexes tool call metadata**: search by files touched, errors encountered.
