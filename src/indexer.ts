@@ -1,5 +1,6 @@
 import { parseSession } from "./parser";
 import { chunkSession } from "./chunker";
+import { enrichChunkText } from "./enrichment";
 import { getEmbeddings } from "./embeddings";
 import type { ClaudeFindDB } from "./db";
 import { existsSync, statSync, readdirSync } from "fs";
@@ -42,12 +43,17 @@ export async function indexSession(
 
   if (chunks.length === 0) return false;
 
+  // Enrich chunks with session context (project, branch, files, date) for better retrieval
+  const enrichedTexts = chunks.map((chunk) =>
+    enrichChunkText(chunk, parsed.metadata, parsed.filesTouched)
+  );
+
   // Embed in small batches — tensor dispose prevents memory leaks
   const BATCH_SIZE = 4;
   const embeddings: Float32Array[] = [];
   for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
-    const batchEmbeddings = await getEmbeddings(batch.map((c) => c.text), "search_document");
+    const batch = enrichedTexts.slice(i, i + BATCH_SIZE);
+    const batchEmbeddings = await getEmbeddings(batch, "search_document");
     embeddings.push(...batchEmbeddings);
   }
 
@@ -75,7 +81,7 @@ export async function indexSession(
         sessionId,
         chunk.msgStart,
         chunk.msgEnd,
-        chunk.text,
+        enrichedTexts[i],
         chunk.isCompactSummary
       );
       db.insertVector(chunkId, embeddings[i]);

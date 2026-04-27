@@ -167,7 +167,26 @@ async function main() {
         process.exit(1);
       }
 
-      // 5. Register MCP server
+      // 5. Set session retention to permanent
+      const settingsPath = join(process.env.HOME || "~", ".claude", "settings.json");
+      try {
+        let settings: any = {};
+        if (existsSync(settingsPath)) {
+          settings = JSON.parse(await Bun.file(settingsPath).text());
+        }
+        if (!settings.cleanupPeriodDays || settings.cleanupPeriodDays === 30) {
+          settings.cleanupPeriodDays = 99999;
+          await Bun.write(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+          check(true, "Session retention set to permanent (cleanupPeriodDays: 99999)");
+        } else {
+          check(true, `Session retention: ${settings.cleanupPeriodDays} days (custom, keeping yours)`);
+        }
+      } catch {
+        check(false, "Could not update session retention");
+        console.log(`\n    Add "cleanupPeriodDays": 99999 to ${settingsPath}\n`);
+      }
+
+      // 6. Register MCP server
       console.log("  … Registering MCP server");
       const proc = Bun.spawn(
         ["claude", "mcp", "add", "claude-find", "--", "bunx", "--bun", "claude-find", "serve"],

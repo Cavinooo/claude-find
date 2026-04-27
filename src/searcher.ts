@@ -1,5 +1,6 @@
 import { getEmbedding } from "./embeddings";
 import type { ClaudeFindDB } from "./db";
+import { basename } from "path";
 
 export interface SearchOptions {
   query: string;
@@ -55,8 +56,12 @@ export async function search(
   // Wider search window — we'll narrow after grouping
   const searchLimit = maxSessions * maxChunks * 5;
 
-  // 1. Semantic search
-  const queryEmbedding = await getEmbedding(query, "search_query");
+  // 1. Semantic search — enrich query with project context to match document-side enrichment
+  let enrichedQuery = query;
+  if (currentProject) {
+    enrichedQuery = `${basename(currentProject)}: ${query}`;
+  }
+  const queryEmbedding = await getEmbedding(enrichedQuery, "search_query");
   const vectorResults = db.searchVectors(queryEmbedding, searchLimit);
 
   // 2. Keyword search — sanitize query for FTS5 syntax, degrade gracefully on error

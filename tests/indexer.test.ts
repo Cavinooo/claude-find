@@ -117,6 +117,9 @@ describe("indexSession", () => {
     // Chunk text should contain the conversation
     const allText = chunks.map((c: any) => c.text).join(" ");
     expect(allText).toContain("auth flash bug");
+
+    // Chunks should be enriched with metadata prefix
+    expect(allText).toContain("[Project: myapp");
   }, 60000); // allow time for embedding model load
 
   test("stores embeddings for each chunk", async () => {
