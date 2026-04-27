@@ -11,7 +11,7 @@ brew install bun ollama
 bunx claude-find setup
 ```
 
-`setup` starts Ollama, pulls the embedding model, and registers the MCP server with Claude Code. Sessions are indexed in the background on startup. Searches work immediately and return progressively more complete results as indexing continues.
+`setup` starts Ollama, pulls the embedding model, sets session retention to permanent, and registers the MCP server with Claude Code. Sessions are indexed in the background on startup. Searches work immediately and return progressively more complete results as indexing continues.
 
 <details>
 <summary>Linux / Windows</summary>
@@ -36,9 +36,12 @@ Claude searches your past sessions semantically, finds the relevant conversation
 
 1. **Indexes** all Claude Code session JSONL files from `~/.claude/projects/`
 2. **Extracts** user + assistant messages, compact summaries, file paths from tool calls
-3. **Embeds** conversation chunks using nomic-embed-text via Ollama (GPU accelerated)
-4. **Searches** with hybrid semantic + keyword (FTS5) merged via Reciprocal Rank Fusion
-5. **Returns** raw conversation chunks so Claude can synthesize with full context
+3. **Enriches** each chunk with metadata context (project, branch, files, date) for better retrieval
+4. **Embeds** conversation chunks using nomic-embed-text via Ollama (GPU accelerated)
+5. **Searches** with hybrid semantic + keyword (FTS5) merged via Reciprocal Rank Fusion
+6. **Returns** raw conversation chunks so Claude can synthesize with full context
+
+After upgrading, run `bunx claude-find index` to rebuild the index with the latest improvements.
 
 ## What makes this different
 

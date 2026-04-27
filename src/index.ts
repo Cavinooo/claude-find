@@ -24,6 +24,10 @@ async function main() {
       break;
 
     case "index": {
+      if (existsSync(DB_PATH)) {
+        const { unlinkSync } = await import("fs");
+        unlinkSync(DB_PATH);
+      }
       console.log("Indexing Claude Code sessions...\n");
       const db = createDatabase(DB_PATH);
       let indexed = 0;
@@ -214,7 +218,7 @@ async function main() {
 
 Usage:
   claude-find setup     Install everything and register with Claude Code
-  claude-find index     Force re-index all sessions
+  claude-find index     Rebuild index from scratch
   claude-find status    Show index statistics
 `);
   }
