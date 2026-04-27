@@ -2,7 +2,7 @@
 
 Pull deep memory from across your Claude Code sessions — when you need it.
 
-Semantic search over all your past Claude Code sessions. Finds context by meaning, not just keywords. Searches the raw conversation transcripts, not compressed summaries, so Claude gets the full picture: reasoning, constraints, failed approaches, and decisions.
+Semantic search over all your past Claude Code sessions. Finds context by meaning and keywords. Searches the raw conversation transcripts, not compressed summaries, so Claude gets the full picture: reasoning, constraints, failed approaches, and decisions.
 
 ## Setup
 
@@ -42,7 +42,7 @@ Claude searches your past sessions semantically, finds the relevant conversation
 
 ## What makes this different
 
-- **Searches raw transcripts**, not summaries. Nothing lost through compression.
+- **Searches raw transcripts**. Nothing lost through compression.
 - **Retroactive**: works on all existing sessions immediately. No hooks needed.
 - **Non-blocking**: indexes in the background at startup. Searches work instantly, even mid-indexing.
 - **Uses compact summaries**: Claude's own session understanding, boosted in ranking.
