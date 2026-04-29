@@ -1,5 +1,6 @@
 const OLLAMA_URL = "http://localhost:11434";
-const OLLAMA_MODEL = "nomic-embed-text";
+const OLLAMA_MODEL = "qwen3-embedding:0.6b";
+export const EMBEDDING_DIMS = 1024;
 
 let ollamaChecked = false;
 
@@ -64,13 +65,16 @@ async function checkOllama(): Promise<void> {
 
 /**
  * Embed via Ollama HTTP API.
+ * Qwen3-Embedding uses instruction prefixes for queries, raw text for documents.
  */
-async function embedViaOllama(texts: string[], prefix: string): Promise<Float32Array[]> {
-  const prefixed = texts.map((t) => `${prefix}: ${t}`);
+async function embedViaOllama(texts: string[], mode: "document" | "query"): Promise<Float32Array[]> {
+  const input = mode === "query"
+    ? texts.map((t) => `Instruct: Given a search query, retrieve relevant conversation passages\nQuery: ${t}`)
+    : texts;
   const resp = await fetch(`${OLLAMA_URL}/api/embed`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: OLLAMA_MODEL, input: prefixed }),
+    body: JSON.stringify({ model: OLLAMA_MODEL, input }),
   });
 
   if (!resp.ok) {
@@ -86,10 +90,10 @@ async function embedViaOllama(texts: string[], prefix: string): Promise<Float32A
  */
 export async function getEmbedding(
   text: string,
-  prefix: "search_document" | "search_query" = "search_document"
+  mode: "document" | "query" = "document"
 ): Promise<Float32Array> {
   await checkOllama();
-  const [result] = await embedViaOllama([text], prefix);
+  const [result] = await embedViaOllama([text], mode);
   return result;
 }
 
@@ -98,7 +102,7 @@ export async function getEmbedding(
  */
 export async function getEmbeddings(
   texts: string[],
-  prefix: "search_document" | "search_query" = "search_document"
+  mode: "document" | "query" = "document"
 ): Promise<Float32Array[]> {
   await checkOllama();
 
@@ -107,7 +111,7 @@ export async function getEmbeddings(
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
     try {
-      const batchResults = await embedViaOllama(batch, prefix);
+      const batchResults = await embedViaOllama(batch, mode);
       results.push(...batchResults);
     } catch (err: any) {
       // Only retry individually for content errors (4xx)
@@ -115,11 +119,11 @@ export async function getEmbeddings(
       if (status && parseInt(status) >= 400 && parseInt(status) < 500) {
         for (const text of batch) {
           try {
-            const [single] = await embedViaOllama([text], prefix);
+            const [single] = await embedViaOllama([text], mode);
             results.push(single);
           } catch {
             console.error(`[claude-find] Warning: failed to embed chunk (${text.length} chars), skipping`);
-            results.push(new Float32Array(768));
+            results.push(new Float32Array(EMBEDDING_DIMS));
           }
         }
       } else {

@@ -61,7 +61,7 @@ export async function search(
   if (currentProject) {
     enrichedQuery = `${basename(currentProject)}: ${query}`;
   }
-  const queryEmbedding = await getEmbedding(enrichedQuery, "search_query");
+  const queryEmbedding = await getEmbedding(enrichedQuery, "query");
   const vectorResults = db.searchVectors(queryEmbedding, searchLimit);
 
   // 2. Keyword search — sanitize query for FTS5 syntax, degrade gracefully on error

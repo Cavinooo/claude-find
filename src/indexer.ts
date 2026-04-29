@@ -53,7 +53,7 @@ export async function indexSession(
   const embeddings: Float32Array[] = [];
   for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
     const batch = enrichedTexts.slice(i, i + BATCH_SIZE);
-    const batchEmbeddings = await getEmbeddings(batch, "search_document");
+    const batchEmbeddings = await getEmbeddings(batch, "document");
     embeddings.push(...batchEmbeddings);
   }
 

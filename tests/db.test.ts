@@ -203,15 +203,15 @@ describe("vector operations", () => {
     const id1 = db.insertChunk("vec-test", 0, 9, "auth discussion", false);
     const id2 = db.insertChunk("vec-test", 10, 19, "payment processing", false);
 
-    // Insert fake 768-dim vectors
-    const vec1 = new Float32Array(768).fill(0.1);
-    const vec2 = new Float32Array(768).fill(0.9);
+    // Insert fake 1024-dim vectors
+    const vec1 = new Float32Array(1024).fill(0.1);
+    const vec2 = new Float32Array(1024).fill(0.9);
 
     db.insertVector(id1, vec1);
     db.insertVector(id2, vec2);
 
     // Query with a vector close to vec1
-    const queryVec = new Float32Array(768).fill(0.15);
+    const queryVec = new Float32Array(1024).fill(0.15);
     const results = db.searchVectors(queryVec, 2);
 
     expect(results.length).toBe(2);

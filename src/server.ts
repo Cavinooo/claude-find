@@ -166,4 +166,8 @@ export async function startServer(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("[claude-find] MCP server running on stdio");
+
+  // Bun exits when the event loop drains. StdioServerTransport doesn't register
+  // as an active handle, so keep the process alive explicitly.
+  setInterval(() => {}, 2 ** 31 - 1);
 }

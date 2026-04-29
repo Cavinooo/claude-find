@@ -1,8 +1,9 @@
 import { Database } from "bun:sqlite";
 import * as sqliteVec from "sqlite-vec";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, unlinkSync } from "fs";
 import { dirname } from "path";
 import { platform } from "process";
+import { EMBEDDING_DIMS } from "./embeddings";
 
 // Must be called before any Database is opened, and only once
 let sqliteConfigured = false;
@@ -66,7 +67,26 @@ export function createDatabase(dbPath: string): ClaudeFindDB {
   const dir = dirname(dbPath);
   mkdirSync(dir, { recursive: true });
 
-  const db = new Database(dbPath);
+  let db = new Database(dbPath);
+
+  // Check for dimension mismatch — if the DB was built with a different
+  // embedding model, delete it and start fresh. DB is a rebuildable cache.
+  sqliteVec.load(db);
+  const vecTable = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='chunks_vec'"
+  ).get() as any;
+  if (vecTable) {
+    const row = db.prepare(
+      "SELECT vec_length(embedding) as dims FROM chunks_vec LIMIT 1"
+    ).get() as any;
+    if (row && row.dims !== EMBEDDING_DIMS) {
+      console.error(`[claude-find] Embedding dimensions changed (${row.dims} → ${EMBEDDING_DIMS}), rebuilding index...`);
+      db.close();
+      unlinkSync(dbPath);
+      db = new Database(dbPath);
+      sqliteVec.load(db);
+    }
+  }
 
   // Enable WAL mode for concurrent access
   db.exec("PRAGMA journal_mode=WAL");
@@ -117,7 +137,7 @@ export function createDatabase(dbPath: string): ClaudeFindDB {
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_vec USING vec0(
       chunk_id INTEGER PRIMARY KEY,
-      embedding float[768]
+      embedding float[${EMBEDDING_DIMS}]
     );
   `);
 

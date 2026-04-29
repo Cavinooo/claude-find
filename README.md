@@ -37,7 +37,7 @@ Claude searches your past sessions semantically, finds the relevant conversation
 1. **Indexes** all Claude Code session JSONL files from `~/.claude/projects/`
 2. **Extracts** user + assistant messages, compact summaries, file paths from tool calls
 3. **Enriches** each chunk with metadata context (project, branch, files, date) for better retrieval
-4. **Embeds** conversation chunks using nomic-embed-text via Ollama (GPU accelerated)
+4. **Embeds** conversation chunks using qwen3-embedding via Ollama (GPU accelerated)
 5. **Searches** with hybrid semantic + keyword (FTS5) merged via Reciprocal Rank Fusion
 6. **Returns** raw conversation chunks so Claude can synthesize with full context
 

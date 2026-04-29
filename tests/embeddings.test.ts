@@ -6,11 +6,11 @@ describe("embeddings", () => {
     expect(isModelLoaded()).toBe(false);
   });
 
-  test("generates a 768-dimensional embedding for a single text", async () => {
+  test("generates a 1024-dimensional embedding for a single text", async () => {
     const embedding = await getEmbedding("authentication login session bug");
 
     expect(embedding).toBeInstanceOf(Float32Array);
-    expect(embedding.length).toBe(768);
+    expect(embedding.length).toBe(1024);
 
     // Values should be non-zero (not an empty/failed embedding)
     const hasNonZero = embedding.some((v) => v !== 0);
@@ -49,7 +49,7 @@ describe("embeddings", () => {
     expect(embeddings.length).toBe(3);
     for (const emb of embeddings) {
       expect(emb).toBeInstanceOf(Float32Array);
-      expect(emb.length).toBe(768);
+      expect(emb.length).toBe(1024);
     }
   }, 30000);
 
@@ -57,7 +57,7 @@ describe("embeddings", () => {
     const embedding = await getEmbedding("");
 
     expect(embedding).toBeInstanceOf(Float32Array);
-    expect(embedding.length).toBe(768);
+    expect(embedding.length).toBe(1024);
   }, 30000);
 });
 

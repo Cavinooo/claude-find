@@ -172,7 +172,7 @@ describe("chunkSession", () => {
 
     // Verify no chunk exceeds the target size by much
     for (const chunk of regularChunks) {
-      expect(chunk.text.length).toBeLessThan(7000);
+      expect(chunk.text.length).toBeLessThan(15000);
     }
   });
 
@@ -190,7 +190,7 @@ describe("chunkSession", () => {
     expect(regularChunks.length).toBeGreaterThan(1);
     // No chunk should exceed the target size by much
     for (const chunk of regularChunks) {
-      expect(chunk.text.length).toBeLessThan(7000);
+      expect(chunk.text.length).toBeLessThan(15000);
     }
   });
 
@@ -200,7 +200,7 @@ describe("chunkSession", () => {
 
     expect(chunks.length).toBeGreaterThan(1);
     for (const chunk of chunks) {
-      expect(chunk.text.length).toBeLessThan(7000);
+      expect(chunk.text.length).toBeLessThan(15000);
       expect(chunk.isCompactSummary).toBe(true);
     }
   });

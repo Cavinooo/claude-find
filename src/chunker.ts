@@ -8,10 +8,10 @@ export interface Chunk {
   isCompactSummary: boolean;
 }
 
-// nomic-embed-text has 2048 token context via Ollama. Worst-case tokenization
-// (code, URLs, special chars) is ~2 chars/token. 3800 chars / 2 = 1900 tokens,
-// plus ~200 char enrichment prefix = safely under 2048.
-const TARGET_CHARS = 3800;
+// Qwen3-Embedding has 32K token context via Ollama. At ~4 chars/token for
+// natural language, 8000 chars ≈ 2000 tokens — well within limits and ~2x
+// larger than before for more coherent chunks.
+const TARGET_CHARS = 8000;
 
 function formatMessage(msg: ParsedMessage): string {
   const label = msg.role === "user" ? "USER" : "CLAUDE";

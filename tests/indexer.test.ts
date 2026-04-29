@@ -138,7 +138,7 @@ describe("indexSession", () => {
     // Vector search should return results (embedding was stored)
     // We need to import getEmbedding to create a query vector
     const { getEmbedding } = await import("../src/embeddings");
-    const queryVec = await getEmbedding("stripe payment webhook", "search_query");
+    const queryVec = await getEmbedding("stripe payment webhook", "query");
     const results = db.searchVectors(queryVec, 5);
     expect(results.length).toBeGreaterThan(0);
   }, 60000);

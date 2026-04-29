@@ -140,13 +140,13 @@ async function main() {
             const resp = await fetch("http://localhost:11434/api/tags");
             const data = await resp.json() as any;
             const models = data.models || [];
-            const hasModel = models.some((m: any) => m.name?.startsWith("nomic-embed-text"));
+            const hasModel = models.some((m: any) => m.name?.startsWith("qwen3-embedding"));
             if (!hasModel) {
-              console.log("  … Pulling nomic-embed-text (274 MB)");
+              console.log("  … Pulling qwen3-embedding:0.6b (639 MB)");
               const pullResp = await fetch("http://localhost:11434/api/pull", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: "nomic-embed-text" }),
+                body: JSON.stringify({ model: "qwen3-embedding:0.6b" }),
               });
               if (!pullResp.ok || !pullResp.body) throw new Error("Pull failed");
               const reader = pullResp.body.getReader();
@@ -154,13 +154,13 @@ async function main() {
                 const { done } = await reader.read();
                 if (done) break;
               }
-              check(true, "Model nomic-embed-text ready");
+              check(true, "Model qwen3-embedding:0.6b ready");
             } else {
-              check(true, "Model nomic-embed-text ready");
+              check(true, "Model qwen3-embedding:0.6b ready");
             }
           } catch (err) {
             check(false, "Failed to pull model");
-            console.log("\n    ollama pull nomic-embed-text\n");
+            console.log("\n    ollama pull qwen3-embedding:0.6b\n");
             failed = true;
           }
         }
