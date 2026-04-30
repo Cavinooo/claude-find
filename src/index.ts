@@ -193,7 +193,7 @@ async function main() {
       // 6. Register MCP server
       console.log("  … Registering MCP server");
       const proc = Bun.spawn(
-        ["claude", "mcp", "add", "claude-find", "--", "bunx", "--bun", "claude-find", "serve"],
+        ["claude", "mcp", "add", "--scope", "user", "claude-find", "--", "bunx", "--bun", "claude-find", "serve"],
         { stdout: "pipe", stderr: "pipe" }
       );
       await proc.exited;
