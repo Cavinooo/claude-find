@@ -70,11 +70,15 @@ export async function search(
     const ftsQuery = query
       .split(/\s+/)
       .filter(Boolean)
-      .map((term) => `"${term.replace(/"/g, '""')}"`)
+      .map((term) => term.replace(/[^\w]/g, ""))
+      .filter((term) => term && !/^(AND|OR|NOT|NEAR)$/i.test(term))
+      .map((term) => `"${term}"`)
       .join(" ");
-    ftsResults = db.searchFTS(ftsQuery, searchLimit);
-  } catch {
-    // FTS5 parse error — fall back to vector-only results
+    if (ftsQuery) {
+      ftsResults = db.searchFTS(ftsQuery, searchLimit);
+    }
+  } catch (err) {
+    console.warn(`[claude-find] FTS5 fallback for query "${query}":`, err instanceof Error ? err.message : err);
   }
 
   // 3. Reciprocal Rank Fusion
