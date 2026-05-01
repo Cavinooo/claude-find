@@ -7,12 +7,17 @@ import { search, type SearchResult } from "./searcher";
 import { join } from "path";
 import { existsSync } from "fs";
 
+// Track indexing progress at module scope so global error handlers can update it
+let indexProgress = { current: 0, total: 0, done: false };
+
 // Prevent background indexing errors from crashing the MCP server
 process.on("uncaughtException", (err) => {
   console.error("[claude-find] Uncaught exception:", err);
+  indexProgress.done = true;
 });
 process.on("unhandledRejection", (err) => {
   console.error("[claude-find] Unhandled rejection:", err);
+  indexProgress.done = true;
 });
 
 const CLAUDE_PROJECTS_DIR = join(
@@ -79,7 +84,6 @@ export async function startServer(): Promise<void> {
   });
 
   let db: ReturnType<typeof createDatabase> | null = null;
-  let indexProgress = { current: 0, total: 0, done: false };
 
   function getDb() {
     if (!db) {
