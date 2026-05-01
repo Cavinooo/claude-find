@@ -103,11 +103,11 @@ export async function getEmbedding(
 export async function getEmbeddings(
   texts: string[],
   mode: "document" | "query" = "document"
-): Promise<Float32Array[]> {
+): Promise<(Float32Array | null)[]> {
   await checkOllama();
 
   const BATCH_SIZE = 8;
-  const results: Float32Array[] = [];
+  const results: (Float32Array | null)[] = [];
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
     try {
@@ -123,7 +123,7 @@ export async function getEmbeddings(
             results.push(single);
           } catch {
             console.error(`[claude-find] Warning: failed to embed chunk (${text.length} chars), skipping`);
-            results.push(new Float32Array(EMBEDDING_DIMS));
+            results.push(null);
           }
         }
       } else {

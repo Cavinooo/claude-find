@@ -50,7 +50,7 @@ export async function indexSession(
 
   // Embed in small batches — tensor dispose prevents memory leaks
   const BATCH_SIZE = 4;
-  const embeddings: Float32Array[] = [];
+  const embeddings: (Float32Array | null)[] = [];
   for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
     const batch = enrichedTexts.slice(i, i + BATCH_SIZE);
     const batchEmbeddings = await getEmbeddings(batch, "document");
@@ -84,7 +84,9 @@ export async function indexSession(
         enrichedTexts[i],
         chunk.isCompactSummary
       );
-      db.insertVector(chunkId, embeddings[i]);
+      if (embeddings[i]) {
+        db.insertVector(chunkId, embeddings[i]);
+      }
     }
   });
 
