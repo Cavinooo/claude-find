@@ -119,8 +119,8 @@ export async function startServer(): Promise<void> {
     "Search the full conversation history from past Claude Code sessions stored in ~/.claude/projects/. This tool has access to the complete raw transcripts of all previous sessions — including the actual back-and-forth discussion, reasoning, failed approaches, user constraints, and code decisions. Use this tool FIRST whenever the user mentions anything from a past session, asks 'what did we discuss', 'pull in context from', 'remember when we', 'how did we handle', or references any prior work. This tool searches semantically — the user doesn't need to remember exact words. Much more detailed than built-in memory.",
     {
       query: z.string().describe("What to search for — natural language description of the past session or topic"),
-      max_sessions: z.number().min(1).max(10).optional().default(3).describe("Max sessions to return (default 3, max 10)"),
-      max_chunks: z.number().min(1).max(5).optional().default(3).describe("Max conversation chunks per session (default 3, max 5)"),
+      max_sessions: z.number().min(1).max(5).optional().default(3).describe("Max sessions to return (default 3, max 5)"),
+      max_chunks: z.number().min(1).max(3).optional().default(3).describe("Max conversation chunks per session (default 3, max 3)"),
       scope: z.enum(["current", "all"]).optional().default("current").describe("'current' searches only the current project (default), 'all' searches across all projects. Use 'all' when user says 'across all projects' or doesn't specify a project."),
       project_filter: z.string().optional().describe("Filter to a specific project by name (e.g. 'visk', 'myapp'). Use when user says 'in visk' or 'in the payments project'."),
     },
