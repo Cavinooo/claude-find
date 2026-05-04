@@ -74,7 +74,7 @@ async function embedViaOllama(texts: string[], mode: "document" | "query"): Prom
   const resp = await fetch(`${OLLAMA_URL}/api/embed`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: OLLAMA_MODEL, input }),
+    body: JSON.stringify({ model: OLLAMA_MODEL, input, keep_alive: -1 }),
   });
 
   if (!resp.ok) {
