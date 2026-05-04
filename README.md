@@ -2,6 +2,8 @@
 
 Pull deep memory from across your Claude Code sessions — when you need it.
 
+![demo](demo.gif)
+
 Semantic search over all your past Claude Code sessions. Finds context by meaning and keywords. Searches the raw conversation transcripts, not compressed summaries, so Claude gets the full picture: reasoning, constraints, failed approaches, and decisions.
 
 ## Setup
