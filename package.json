@@ -1,6 +1,6 @@
 {
   "name": "claude-find",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Pull deep memory from across your Claude Code sessions — when you need it.",
   "type": "module",
   "bin": {
